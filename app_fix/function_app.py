@@ -1,11 +1,28 @@
 from cofig_function import get_connetion
+from typing import List, Tuple, Optional
 
 def show_data():
     conn = get_connetion()
     curs = conn.cursor()
-    curs.execute('SELECT * FROM produk ORDER BY id_produk ASC')
+
+    query = """ 
+        SELECT 
+            p.id_produk,
+            p.nama_produk,
+            p.harga,
+            p.stok,
+            p.kategori,
+            v.nama_vendor,
+            v.kota
+        FROM produk p
+        INNER JOIN vendor v ON p.id_vendor = v.id_vendor
+        ORDER BY p.id_produk ASC
+"""
+    curs.execute(query)
+
+    print(f"{'ID':<5} {'Nama Produk':<25} {'Harga':<15} {'Stock':<15}{'Jenis':<15}{'Vendor':<20}{'kota'}")  
     for record in curs.fetchall():
-        print (record)
+        print (f'{record[0]:<5}{record[1]:<25}{record[2]:<20}{record[3]:<10}{record[4]:<15}{record[5]:<20}{record[6]}')
 
     curs.close()
     conn.close
@@ -16,8 +33,24 @@ def chose(keyword):
 
     curs = conn.cursor()
     # Menggunakan ILIKE untuk case-insensitive search dengan wildcard
-    query = "SELECT * FROM produk WHERE nama_produk ILIKE %s ORDER BY id_produk ASC"
-    curs.execute(query, (f'%{keyword}%',))
+    query = """
+        SELECT 
+            p.id_produk,
+            p.nama_produk,
+            p.harga,
+            p.stok,
+            p.kategori,
+            v.nama_vendor,
+            v.kota
+        FROM produk p
+        INNER JOIN vendor v ON p.id_vendor = v.id_vendor
+        WHERE p.nama_produk ILIKE %s 
+            OR v.nama_vendor ILIKE %s
+            OR p.kategori ILIKE %s
+        ORDER BY p.id_produk ASC
+    """
+    search_parameter = f'%{keyword}%'
+    curs.execute(query, (search_parameter, search_parameter, search_parameter))
     results = curs.fetchall()
         
     curs.close()
@@ -30,12 +63,9 @@ def showw_chosen(results):
         print('Produk tidak ditemukan')
         return False
     
-    print(f"{'ID':<10} {'Nama Produk':<30} {'Harga':<10} {'Stock':<15}")
-    print("-"*70)    
-
-    for record in results :
-        # Asumsi struktur: (id, nama_produk, stock, harga, ...)
-        print(f"{record[0]:<10} {record[1]:<30} {record[2]:<10} {record[3]:<15}")
+    print(f"{'ID':<5} {'Nama Produk':<25} {'Harga':<15} {'Stock':<15}{'Jenis':<15}{'Vendor':<20}{'kota'}")  
+    for record in results:
+        print (f'{record[0]:<5}{record[1]:<25}{record[2]:<20}{record[3]:<10}{record[4]:<15}{record[5]:<20}{record[6]}')
 
     return True
 
